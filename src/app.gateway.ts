@@ -7,8 +7,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { instrument } from '@socket.io/admin-ui';
-import { Server } from 'socket.io';
 import * as bcrypt from 'bcrypt';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
@@ -32,17 +32,21 @@ export class AppGateway
     });
   }
 
-  handleConnection(client: Server) {
-    console.log('App Gateway: A new user connected');
-    // client.emit('ack', true);
+  handleConnection(client: Socket) {
+    const authorization = client.handshake.headers.authorization;
+    const token = authorization?.split(' ')[1];
+
+    if (token !== 'test') {
+      client.disconnect();
+    }
   }
 
-  handleDisconnect(client: Server) {
+  handleDisconnect(client: Socket) {
     console.log('App Gateway: A user disconnected');
   }
 
   @SubscribeMessage('ping')
-  handleMessage(client: Server, payload: any) {
+  handleMessage(client: Socket, payload: any) {
     console.log('Ping', payload);
     client.emit('pong', payload);
   }
